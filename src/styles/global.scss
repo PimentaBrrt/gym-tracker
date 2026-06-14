@@ -6,10 +6,7 @@
 html, body, #root { height: 100%; }
 
 body {
-  background:
-    radial-gradient(1100px 600px at 80% -10%, rgba(65,105,225,.16), transparent 60%),
-    radial-gradient(900px 500px at -10% 10%, rgba(100,149,237,.10), transparent 55%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
   font-size: 16px;
@@ -19,6 +16,21 @@ body {
   min-height: 100dvh;
   overscroll-behavior-y: none;
 }
+
+// Camada de atmosfera FIXA na viewport: nao rola com o conteudo, entao nao
+// "corta" nem se repete quando ha muitos itens e a pagina fica longa.
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 600px at 80% -10%, rgba(65,105,225,.16), transparent 60%),
+    radial-gradient(900px 500px at -10% 10%, rgba(100,149,237,.10), transparent 55%),
+    var(--bg);
+}
+
 
 h1,h2,h3,h4 { font-family: var(--font-display); font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
 

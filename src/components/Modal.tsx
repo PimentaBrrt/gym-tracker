@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { IconClose } from "./Icons";
 
 interface Props {
@@ -21,7 +22,10 @@ export default function Modal({ open, title, onClose, children }: Props) {
   }, [open, onClose]);
 
   if (!open) return null;
-  return (
+
+  // Portal no body: evita que o transform de ancestrais (.page) prenda o
+  // position:fixed do backdrop, o que escondia o modal no mobile ao scrollar.
+  return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal__head">
@@ -32,6 +36,7 @@ export default function Modal({ open, title, onClose, children }: Props) {
         </div>
         <div className="modal__body">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

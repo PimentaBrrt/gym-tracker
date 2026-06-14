@@ -8,7 +8,7 @@ import { useToast } from "@/store/toastStore";
 import Header from "@/components/Header";
 import Modal from "@/components/Modal";
 import Confirm from "@/components/Confirm";
-import { IconPlus, IconChevron, IconEdit, IconTrash, IconCopy, IconDumbbell } from "@/components/Icons";
+import { IconPlus, IconChevron, IconEdit, IconTrash, IconCopy, IconDumbbell, IconStar } from "@/components/Icons";
 import type { WorkoutWithMeta } from "@/types";
 
 export default function WorkoutsPage() {
@@ -48,7 +48,12 @@ export default function WorkoutsPage() {
       <Header
         title="Treinos"
         subtitle="Seus dias"
-        right={<button className="btn btn--primary btn--sm" onClick={() => { setName(""); setShowCreate(true); }}><IconPlus width={18} height={18} /> Novo</button>}
+        right={
+          <>
+            <button className="btn btn--ghost btn--icon btn--sm" onClick={() => nav("/app/library")} aria-label="Biblioteca de favoritos"><IconStar width={18} height={18} /></button>
+            <button className="btn btn--primary btn--sm" onClick={() => { setName(""); setShowCreate(true); }}><IconPlus width={18} height={18} /> Novo</button>
+          </>
+        }
       />
 
       {isLoading ? (
