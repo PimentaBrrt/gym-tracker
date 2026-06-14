@@ -9,6 +9,7 @@ import Avatar from "@/components/Avatar";
 import Modal from "@/components/Modal";
 import Confirm from "@/components/Confirm";
 import PasswordInput from "@/components/PasswordInput";
+import InstallHint from "@/components/InstallHint";
 import { IconPlus, IconEdit, IconTrash, IconLock } from "@/components/Icons";
 import type { User } from "@/types";
 
@@ -163,6 +164,8 @@ export default function ProfilesPage() {
           <button className="btn btn--primary btn--block" style={{ marginTop: 10 }} disabled={!adminPw}>Entrar como Admin</button>
         </form>
       </Modal>
+
+      <InstallHint hasNav={false} />
     </div>
   );
 }

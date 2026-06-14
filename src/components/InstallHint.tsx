@@ -15,7 +15,12 @@ function isStandalone(): boolean {
   );
 }
 
-export default function InstallHint() {
+interface Props {
+  /** Quando nao ha a barra de navegacao (ex.: tela de perfis), ancora mais embaixo. */
+  hasNav?: boolean;
+}
+
+export default function InstallHint({ hasNav = true }: Props) {
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(KEY) === "1");
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [standalone, setStandalone] = useState(isStandalone());
@@ -48,7 +53,10 @@ export default function InstallHint() {
   };
 
   return (
-    <div className="install-hint">
+    <div
+      className="install-hint"
+      style={hasNav ? undefined : { bottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+    >
       <span className="install-hint__icon">{isIOSSafari ? <IconShare /> : <IconDots />}</span>
       <div className="install-hint__body">
         <strong>Instale o Gym Tracker</strong>

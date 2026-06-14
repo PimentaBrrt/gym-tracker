@@ -244,7 +244,7 @@
   display: flex; align-items: center; gap: 10px;
   box-shadow: var(--shadow);
   border-color: rgba(65,105,225,.4);
-  background: linear-gradient(150deg, rgba(65,105,225,.16), var(--bg-card-2));
+  background: var(--bg-card-2); // solido (sem cantos translucidos)
   animation: fade-up .3s ease both;
   .install-hint__icon { color: var(--blue-2); display: grid; place-items: center; flex-shrink: 0; }
   .install-hint__body { flex: 1; min-width: 0;
