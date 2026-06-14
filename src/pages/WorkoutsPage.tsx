@@ -41,7 +41,7 @@ export default function WorkoutsPage() {
   };
 
   const lastLabel = (iso: string | null) =>
-    iso ? `ultimo: ${new Date(iso).toLocaleDateString("pt-BR")}` : "nunca executado";
+    iso ? `último: ${new Date(iso).toLocaleDateString("pt-BR")}` : "nunca executado";
 
   return (
     <div className="page">
@@ -66,7 +66,7 @@ export default function WorkoutsPage() {
               <div className="workout-item__body" onClick={() => nav(`/app/workouts/${w.id}`)} style={{ cursor: "pointer" }}>
                 <div className="workout-item__name">{w.name}</div>
                 <div className="workout-item__meta numeric">
-                  {w.exerciseCount} exercicios · {w.sessionCount} execucoes · {lastLabel(w.lastCompletedAt)}
+                  {w.exerciseCount} exercícios · {w.sessionCount} execuções · {lastLabel(w.lastCompletedAt)}
                 </div>
               </div>
               <button className="btn btn--icon btn--ghost btn--sm" onClick={async () => { await duplicate.mutateAsync(w.id); toast("Treino duplicado"); }} aria-label="Duplicar"><IconCopy width={17} height={17} /></button>
@@ -81,7 +81,7 @@ export default function WorkoutsPage() {
       <Modal open={showCreate} title="Novo dia de treino" onClose={() => setShowCreate(false)}>
         <form onSubmit={submitCreate}>
           <div className="field"><label>Nome</label>
-            <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Peito e Triceps" />
+            <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Peito e Tríceps" />
           </div>
           <button className="btn btn--primary btn--block" disabled={create.isPending}>Criar</button>
         </form>
@@ -99,8 +99,8 @@ export default function WorkoutsPage() {
       <Confirm
         open={!!deleting}
         title="Excluir treino"
-        message={`Excluir "${deleting?.name}" e todos os seus exercicios e historico?`}
-        onConfirm={async () => { if (deleting) { await remove.mutateAsync(deleting.id); toast("Treino excluido"); } }}
+        message={`Excluir "${deleting?.name}" e todos os seus exercícios e histórico?`}
+        onConfirm={async () => { if (deleting) { await remove.mutateAsync(deleting.id); toast("Treino excluído"); } }}
         onClose={() => setDeleting(null)}
       />
     </div>

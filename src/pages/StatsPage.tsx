@@ -3,15 +3,12 @@ import { useUser } from "@/hooks/useUsers";
 import { useUserSessions } from "@/hooks/useSessions";
 import { useUserHistory } from "@/hooks/useHistory";
 import { useWorkouts } from "@/hooks/useWorkouts";
-import { workoutsApi, exercisesApi } from "@/lib/api";
+import { workoutsApi, exercisesApi, sessionsApi, historyApi } from "@/lib/api";
 import Header from "@/components/Header";
 import { useToast } from "@/store/toastStore";
 import { exportJson, exportCsv, type ExportBundle } from "@/lib/export";
-import {
-  totalVolume, mostExecuted, streak,
-} from "@/lib/stats";
+import { totalVolume, mostExecuted, streak } from "@/lib/stats";
 import { IconDownload, IconTrophy, IconFlame, IconDumbbell, IconStar } from "@/components/Icons";
-import { sessionsApi, historyApi } from "@/lib/api";
 
 export default function StatsPage() {
   const userId = useAuthStore((s) => s.currentUserId)!;
@@ -46,13 +43,13 @@ export default function StatsPage() {
 
   return (
     <div className="page">
-      <Header title="Estatisticas" subtitle="Seu progresso" />
+      <Header title="Estatísticas" subtitle="Seu progresso" />
 
       <div className="stat-grid">
         <div className="stat-card">
           <div className="stat-card__icon"><IconDumbbell width={20} height={20} /></div>
           <div className="stat-card__value numeric">{completed}</div>
-          <div className="stat-card__label">Treinos concluidos</div>
+          <div className="stat-card__label">Treinos concluídos</div>
         </div>
         <div className="stat-card">
           <div className="stat-card__icon"><IconTrophy width={20} height={20} /></div>
@@ -75,12 +72,12 @@ export default function StatsPage() {
       <div className="card">
         <div className="spread"><span className="text-2">Total de treinos cadastrados</span><span className="numeric" style={{ fontWeight: 700 }}>{workouts?.length ?? 0}</span></div>
         <hr className="divider" />
-        <div className="spread"><span className="text-2">Execucoes registradas</span><span className="numeric" style={{ fontWeight: 700 }}>{completed}</span></div>
+        <div className="spread"><span className="text-2">Execuções registradas</span><span className="numeric" style={{ fontWeight: 700 }}>{completed}</span></div>
         <hr className="divider" />
-        <div className="spread"><span className="text-2">Series/exercicios feitos</span><span className="numeric" style={{ fontWeight: 700 }}>{history?.length ?? 0}</span></div>
+        <div className="spread"><span className="text-2">Séries/exercícios feitos</span><span className="numeric" style={{ fontWeight: 700 }}>{history?.length ?? 0}</span></div>
       </div>
 
-      <div className="section-title"><h2>Backup e exportacao</h2></div>
+      <div className="section-title"><h2>Backup e exportação</h2></div>
       <div className="row" style={{ gap: 12 }}>
         <button className="btn btn--ghost btn--block" onClick={() => doExport("json")}><IconDownload width={18} height={18} /> JSON</button>
         <button className="btn btn--ghost btn--block" onClick={() => doExport("csv")}><IconDownload width={18} height={18} /> CSV</button>

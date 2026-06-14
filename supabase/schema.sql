@@ -1,6 +1,7 @@
 -- ============================================================
--- Family Gym Tracker — esquema Supabase / PostgreSQL
+-- Gym Tracker — esquema Supabase / PostgreSQL
 -- Rode este script no SQL Editor do seu projeto Supabase.
+-- Pode ser executado de novo com seguranca (idempotente).
 -- ============================================================
 
 create extension if not exists "pgcrypto";
@@ -63,6 +64,13 @@ create table if not exists public.exercise_library (
   created_at    timestamptz not null default now()
 );
 
+-- ---------- APP SETTINGS (senhas editaveis pelo admin, guardadas como hash) ----------
+create table if not exists public.app_settings (
+  key        text primary key,
+  value      text not null,
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists idx_workouts_user      on public.workouts(user_id);
 create index if not exists idx_exercises_workout   on public.exercises(workout_id);
 create index if not exists idx_sessions_workout    on public.workout_sessions(workout_id);
@@ -75,12 +83,21 @@ insert into public.users (name, is_admin, avatar_hue)
 select 'Admin', true, 225
 where not exists (select 1 from public.users where is_admin = true);
 
+-- ---------- Hashes de senha padrao (SHA-256) ----------
+-- family_password_hash  -> "Family123@"
+-- admin_password_hash   -> "AdministratorAccess3103@"
+insert into public.app_settings (key, value) values
+  ('family_password_hash', '7007c82e58094a6555e4ccc355be1971b57f813fca397dc544e229fefa393e9a')
+on conflict (key) do nothing;
+insert into public.app_settings (key, value) values
+  ('admin_password_hash', 'fe21c25ac4db51dc7d13a4d0d1c0f969b5782fb343f12b14defc6aa0faa73d26')
+on conflict (key) do nothing;
+
 -- ============================================================
 -- RLS: este app usa um portao de senha compartilhado no cliente
 -- (nao usa Supabase Auth). Para um app familiar com a anon key,
 -- as policies abaixo liberam acesso via anon. Ajuste se desejar
--- maior isolamento. Para desabilitar totalmente o RLS, comente
--- o bloco e rode "alter table ... disable row level security".
+-- maior isolamento.
 -- ============================================================
 alter table public.users            enable row level security;
 alter table public.workouts         enable row level security;
@@ -88,12 +105,13 @@ alter table public.exercises        enable row level security;
 alter table public.workout_sessions enable row level security;
 alter table public.exercise_history enable row level security;
 alter table public.exercise_library enable row level security;
+alter table public.app_settings     enable row level security;
 
 do $$
 declare t text;
 begin
   foreach t in array array[
-    'users','workouts','exercises','workout_sessions','exercise_history','exercise_library'
+    'users','workouts','exercises','workout_sessions','exercise_history','exercise_library','app_settings'
   ] loop
     execute format('drop policy if exists "anon_all_%1$s" on public.%1$s;', t);
     execute format(

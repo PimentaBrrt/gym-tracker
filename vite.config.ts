@@ -13,9 +13,9 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg"],
       manifest: {
-        name: "Family Gym Tracker",
+        name: "Gym Tracker",
         short_name: "GymTrack",
-        description: "Acompanhamento de treinos de academia para a familia.",
+        description: "Acompanhamento de treinos de academia.",
         theme_color: "#061414",
         background_color: "#061414",
         display: "standalone",

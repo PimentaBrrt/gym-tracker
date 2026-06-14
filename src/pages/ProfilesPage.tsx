@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from "@/hooks/useUsers";
-import { matchesHash, ADMIN_PASSWORD_HASH } from "@/lib/crypto";
+import { sha256, ADMIN_PASSWORD_HASH } from "@/lib/crypto";
+import { settingsApi } from "@/lib/api";
 import { useToast } from "@/store/toastStore";
 import Avatar from "@/components/Avatar";
 import Modal from "@/components/Modal";
 import Confirm from "@/components/Confirm";
+import PasswordInput from "@/components/PasswordInput";
 import { IconPlus, IconEdit, IconTrash, IconLock } from "@/components/Icons";
 import type { User } from "@/types";
 
@@ -42,7 +44,12 @@ export default function ProfilesPage() {
 
   const confirmAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (await matchesHash(adminPw, ADMIN_PASSWORD_HASH)) {
+    let expected = ADMIN_PASSWORD_HASH;
+    try {
+      const stored = await settingsApi.get("admin_password_hash");
+      if (stored) expected = stored;
+    } catch { /* usa padrão */ }
+    if ((await sha256(adminPw)) === expected) {
       selectUser(adminFor!.id, true);
       nav("/app", { replace: true });
     } else {
@@ -67,7 +74,7 @@ export default function ProfilesPage() {
 
   return (
     <div className="profiles">
-      <div className="eyebrow">Family Gym Tracker</div>
+      <div className="eyebrow">Gym Tracker</div>
       <h1>Quem vai treinar?</h1>
 
       {isLoading ? (
@@ -120,7 +127,7 @@ export default function ProfilesPage() {
       <Modal open={showCreate} title="Novo perfil" onClose={() => setShowCreate(false)}>
         <form onSubmit={submitCreate}>
           <div className="field"><label>Nome</label>
-            <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Joao" />
+            <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: João" />
           </div>
           <HuePicker hue={hue} setHue={setHue} name={name || "?"} />
           <button className="btn btn--primary btn--block" style={{ marginTop: 18 }} disabled={createUser.isPending}>Criar perfil</button>
@@ -142,8 +149,8 @@ export default function ProfilesPage() {
       <Confirm
         open={!!deleting}
         title="Excluir perfil"
-        message={`Excluir "${deleting?.name}"? Todos os treinos e historico deste perfil serao removidos.`}
-        onConfirm={async () => { if (deleting) { await deleteUser.mutateAsync(deleting.id); toast("Perfil excluido"); } }}
+        message={`Excluir "${deleting?.name}"? Todos os treinos e histórico deste perfil serão removidos.`}
+        onConfirm={async () => { if (deleting) { await deleteUser.mutateAsync(deleting.id); toast("Perfil excluído"); } }}
         onClose={() => setDeleting(null)}
       />
 
@@ -151,7 +158,7 @@ export default function ProfilesPage() {
       <Modal open={!!adminFor} title="Acesso de administrador" onClose={() => setAdminFor(null)}>
         <form onSubmit={confirmAdmin}>
           <p className="muted" style={{ marginBottom: 14 }}>O perfil Admin pode ver e editar tudo. Digite a senha de admin.</p>
-          <input type="password" autoFocus placeholder="Senha de admin" value={adminPw} onChange={(e) => setAdminPw(e.target.value)} />
+          <PasswordInput value={adminPw} onChange={setAdminPw} placeholder="Senha de admin" autoFocus />
           <div className="gate__error" style={{ marginTop: 8 }}>{adminErr}</div>
           <button className="btn btn--primary btn--block" style={{ marginTop: 10 }} disabled={!adminPw}>Entrar como Admin</button>
         </form>

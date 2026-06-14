@@ -2,9 +2,9 @@ import { NavLink } from "react-router-dom";
 import { IconHome, IconDumbbell, IconHistory, IconChart } from "./Icons";
 
 const items = [
-  { to: "/app", label: "Inicio", icon: IconHome, end: true },
+  { to: "/app", label: "Início", icon: IconHome, end: true },
   { to: "/app/workouts", label: "Treinos", icon: IconDumbbell, end: false },
-  { to: "/app/history", label: "Historico", icon: IconHistory, end: false },
+  { to: "/app/history", label: "Histórico", icon: IconHistory, end: false },
   { to: "/app/stats", label: "Stats", icon: IconChart, end: false },
 ];
 

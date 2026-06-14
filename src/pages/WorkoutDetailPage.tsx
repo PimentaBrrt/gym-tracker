@@ -43,7 +43,7 @@ export default function WorkoutDetailPage() {
   const [deleting, setDeleting] = useState<Exercise | null>(null);
   const [form, setForm] = useState({ ...empty });
 
-  // ---- Sugestao de progressao: 3+ execucoes seguidas com a mesma carga ----
+  // ---- Sugestão de progressão: 3+ execuções seguidas com a mesma carga ----
   const suggestions = useMemo(() => {
     if (!exercises || !history) return [];
     const out: { exercise: Exercise; weight: number; next: number }[] = [];
@@ -83,20 +83,20 @@ export default function WorkoutDetailPage() {
         notes: form.notes.trim() || null,
       },
     });
-    setEditing(null); toast("Exercicio atualizado");
+    setEditing(null); toast("Exercício atualizado");
   };
 
   const finish = async () => {
     if (!exercises?.length) return;
     await complete.mutateAsync({ workoutId: id!, userId, exercises });
     reset(id!);
-    toast("Treino concluido! Execucao registrada.");
+    toast("Treino concluído! Execução registrada.");
     if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
   };
 
   const bump = async (ex: Exercise, next: number) => {
     await updateEx.mutateAsync({ id: ex.id, patch: { current_weight: next } });
-    toast(`Carga de ${ex.name} -> ${next}kg`);
+    toast(`Carga de ${ex.name} → ${next}kg`);
   };
 
   const favorite = async (ex: Exercise) => {
@@ -127,9 +127,9 @@ export default function WorkoutDetailPage() {
         <div className="suggestion" key={s.exercise.id} style={{ marginBottom: 12 }}>
           <span style={{ color: "var(--warning)", marginTop: 2 }}><IconTrophy /></span>
           <div style={{ flex: 1 }}>
-            <strong>Progressao inteligente</strong>
+            <strong>Progressão inteligente</strong>
             <p className="text-2" style={{ fontSize: 14 }}>
-              Voce fez {s.exercise.name} com {s.weight}kg por 3 execucoes seguidas. Aumentar para {s.next}kg?
+              Você fez {s.exercise.name} com {s.weight}kg por 3 execuções seguidas. Aumentar para {s.next}kg?
             </p>
             <button className="btn btn--primary btn--sm" style={{ marginTop: 8 }} onClick={() => bump(s.exercise, s.next)}>
               Aumentar para {s.next}kg
@@ -153,11 +153,11 @@ export default function WorkoutDetailPage() {
       </div>
 
       {!exercises?.length && (
-        <div className="empty"><p>Adicione exercicios a este treino.</p></div>
+        <div className="empty"><p>Adicione exercícios a este treino.</p></div>
       )}
 
       <button className="btn btn--ghost btn--block" style={{ marginTop: 16 }} onClick={openCreate}>
-        <IconPlus width={18} height={18} /> Adicionar exercicio
+        <IconPlus width={18} height={18} /> Adicionar exercício
       </button>
 
       {total > 0 && (
@@ -167,7 +167,7 @@ export default function WorkoutDetailPage() {
       )}
 
       {/* Form criar / editar */}
-      <Modal open={showForm || !!editing} title={editing ? "Editar exercicio" : "Novo exercicio"} onClose={() => { setShowForm(false); setEditing(null); }}>
+      <Modal open={showForm || !!editing} title={editing ? "Editar exercício" : "Novo exercício"} onClose={() => { setShowForm(false); setEditing(null); }}>
         <form onSubmit={editing ? submitEdit : submitCreate}>
           {!editing && library && library.length > 0 && (
             <div className="field">
@@ -193,7 +193,7 @@ export default function WorkoutDetailPage() {
               <input type="number" inputMode="numeric" step="5" value={form.rest_time} onChange={(e) => setForm({ ...form, rest_time: Number(e.target.value) })} />
             </div>
           </div>
-          <div className="field"><label>Observacoes (opcional)</label>
+          <div className="field"><label>Observações (opcional)</label>
             <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Ex.: pegada fechada" />
           </div>
           <button className="btn btn--primary btn--block" disabled={createEx.isPending || updateEx.isPending}>
@@ -204,9 +204,9 @@ export default function WorkoutDetailPage() {
 
       <Confirm
         open={!!deleting}
-        title="Excluir exercicio"
+        title="Excluir exercício"
         message={`Excluir "${deleting?.name}"?`}
-        onConfirm={async () => { if (deleting) { await deleteEx.mutateAsync(deleting.id); toast("Exercicio excluido"); } }}
+        onConfirm={async () => { if (deleting) { await deleteEx.mutateAsync(deleting.id); toast("Exercício excluído"); } }}
         onClose={() => setDeleting(null)}
       />
     </div>

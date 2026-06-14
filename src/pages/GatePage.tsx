@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
-import { matchesHash, FAMILY_PASSWORD_HASH } from "@/lib/crypto";
+import { sha256, FAMILY_PASSWORD_HASH } from "@/lib/crypto";
+import { settingsApi } from "@/lib/api";
+import PasswordInput from "@/components/PasswordInput";
 import { IconLock } from "@/components/Icons";
 
 export default function GatePage() {
@@ -15,7 +17,13 @@ export default function GatePage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const ok = await matchesHash(pw, FAMILY_PASSWORD_HASH);
+    // Hash atual vem do banco (admin pode trocar); fallback para o padrão.
+    let expected = FAMILY_PASSWORD_HASH;
+    try {
+      const stored = await settingsApi.get("family_password_hash");
+      if (stored) expected = stored;
+    } catch { /* offline: usa o padrão */ }
+    const ok = (await sha256(pw)) === expected;
     setLoading(false);
     if (ok) {
       unlockGate();
@@ -30,14 +38,11 @@ export default function GatePage() {
   return (
     <div className="gate">
       <div className="gate__logo"><IconLock width={34} height={34} /></div>
-      <div className="eyebrow">Family Gym Tracker</div>
+      <div className="eyebrow">Gym Tracker</div>
       <h1>Acesso restrito</h1>
-      <p className="muted">Digite a senha da familia para entrar.</p>
+      <p className="muted">Digite a senha para entrar.</p>
       <form className="gate__form" onSubmit={submit}>
-        <input
-          type="password" inputMode="text" autoFocus placeholder="Senha"
-          value={pw} onChange={(e) => setPw(e.target.value)}
-        />
+        <PasswordInput value={pw} onChange={setPw} placeholder="Senha" autoFocus />
         <div className="gate__error">{error}</div>
         <button className="btn btn--primary btn--block" disabled={loading || !pw}>
           {loading ? "Verificando..." : "Entrar"}

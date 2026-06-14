@@ -150,3 +150,18 @@ export const libraryApi = {
     if (error) throw new Error(error.message);
   },
 };
+
+// ---------------- APP SETTINGS (senhas editaveis) ----------------
+export const settingsApi = {
+  async get(key: string): Promise<string | null> {
+    const { data, error } = await supabase
+      .from("app_settings").select("value").eq("key", key).maybeSingle();
+    if (error) throw new Error(error.message);
+    return data?.value ?? null;
+  },
+  async set(key: string, value: string): Promise<void> {
+    const { error } = await supabase
+      .from("app_settings").upsert({ key, value, updated_at: new Date().toISOString() });
+    if (error) throw new Error(error.message);
+  },
+};

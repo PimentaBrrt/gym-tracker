@@ -10,6 +10,7 @@ import WorkoutsPage from "@/pages/WorkoutsPage";
 import WorkoutDetailPage from "@/pages/WorkoutDetailPage";
 import HistoryPage from "@/pages/HistoryPage";
 import StatsPage from "@/pages/StatsPage";
+import AdminPage from "@/pages/AdminPage";
 
 export default function App() {
   const { gateUnlocked, currentUserId } = useAuthStore();
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="workouts/:id" element={<WorkoutDetailPage />} />
             <Route path="history" element={<HistoryPage />} />
             <Route path="stats" element={<StatsPage />} />
+            <Route path="admin" element={<AdminPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

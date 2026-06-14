@@ -48,7 +48,7 @@ export default function ExerciseCard({ exercise, done, onToggle, onEdit, onDelet
         <div className="exercise-card__expand fade-in">
           <RestTimer defaultSeconds={exercise.rest_time} />
           <div className="exercise-card__chart">
-            <div className="eyebrow" style={{ marginBottom: 8 }}>Evolucao de carga</div>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>Evolução de carga</div>
             <WeightChart history={history ?? []} />
           </div>
           <div className="row wrap" style={{ gap: 8 }}>

@@ -7,7 +7,7 @@ interface Props { history: ExerciseHistory[]; }
 
 export default function WeightChart({ history }: Props) {
   if (history.length < 1) {
-    return <p className="muted" style={{ fontSize: 14 }}>Sem dados de evolucao ainda.</p>;
+    return <p className="muted" style={{ fontSize: 14 }}>Sem dados de evolução ainda.</p>;
   }
   const data = history.map((h, i) => ({
     exec: i + 1,
@@ -30,7 +30,7 @@ export default function WeightChart({ history }: Props) {
           />
           <Tooltip
             contentStyle={{ background: "#0e2424", border: "1px solid rgba(150,153,140,0.28)", borderRadius: 12, color: "#E9EBE6" }}
-            labelFormatter={(v) => `Execucao ${v}`}
+            labelFormatter={(v) => `Execução ${v}`}
             formatter={(v: number) => [`${v} kg`, "Carga"]}
           />
           <Line
