@@ -233,3 +233,23 @@
 }
 
 .lib-row__notes { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+
+// ---------- Install hint (banner de instalacao) ----------
+.install-hint {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px);
+  width: calc(100% - 24px); max-width: calc(var(--maxw) - 24px);
+  z-index: 45; // acima da nav (40), abaixo dos modais (60)
+  @include card; padding: 11px 11px 11px 14px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: var(--shadow);
+  border-color: rgba(65,105,225,.4);
+  background: linear-gradient(150deg, rgba(65,105,225,.16), var(--bg-card-2));
+  animation: fade-up .3s ease both;
+  .install-hint__icon { color: var(--blue-2); display: grid; place-items: center; flex-shrink: 0; }
+  .install-hint__body { flex: 1; min-width: 0;
+    strong { font-family: var(--font-display); font-size: 14px; display: block; }
+    p { font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+    b { color: var(--text); font-weight: 700; }
+  }
+}

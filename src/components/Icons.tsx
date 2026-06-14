@@ -81,3 +81,9 @@ export const IconKey = (p: SVGProps<SVGSVGElement>) => (
 export const IconUsers = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base(p)}><circle cx="9" cy="8" r="3.5" /><path d="M3 20a6 6 0 0 1 12 0" /><path d="M16 5a3 3 0 0 1 0 6M17 20a6 6 0 0 0-2-4.5" /></svg>
 );
+export const IconShare = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}><path d="M12 15V4" /><path d="M8.5 7.5 12 4l3.5 3.5" /><path d="M7 11H6a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7a1 1 0 0 0-1-1h-1" /></svg>
+);
+export const IconDots = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)} fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="12" cy="19" r="1.7" /></svg>
+);
