@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { IconShare, IconDots, IconClose } from "./Icons";
 
+// sessionStorage: o aviso reaparece a cada vez que o site e aberto no navegador;
+// fechar so o oculta durante a visita atual.
 const KEY = "gymtrack-install-hint-dismissed";
 
 type BeforeInstallPromptEvent = Event & {
@@ -21,7 +23,7 @@ interface Props {
 }
 
 export default function InstallHint({ hasNav = true }: Props) {
-  const [dismissed, setDismissed] = useState(() => localStorage.getItem(KEY) === "1");
+  const [dismissed, setDismissed] = useState(() => sessionStorage.getItem(KEY) === "1");
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [standalone, setStandalone] = useState(isStandalone());
 
@@ -44,7 +46,7 @@ export default function InstallHint({ hasNav = true }: Props) {
   if (standalone || dismissed) return null;
   if (!isIOSSafari && !isAndroid) return null; // so faz sentido em celular
 
-  const close = () => { localStorage.setItem(KEY, "1"); setDismissed(true); };
+  const close = () => { sessionStorage.setItem(KEY, "1"); setDismissed(true); };
   const install = async () => {
     if (!deferred) return;
     await deferred.prompt();
