@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { IconClose } from "./Icons";
 
@@ -10,6 +10,10 @@ interface Props {
 }
 
 export default function Modal({ open, title, onClose, children }: Props) {
+  // Marca se o gesto COMECOU no proprio backdrop. Assim, arrastar uma selecao
+  // de dentro de um input e soltar fora nao fecha o modal por engano.
+  const downOnBackdrop = useRef(false);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -23,11 +27,17 @@ export default function Modal({ open, title, onClose, children }: Props) {
 
   if (!open) return null;
 
-  // Portal no body: evita que o transform de ancestrais (.page) prenda o
-  // position:fixed do backdrop, o que escondia o modal no mobile ao scrollar.
   return createPortal(
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="modal-backdrop"
+      onPointerDown={(e) => { downOnBackdrop.current = e.target === e.currentTarget; }}
+      onPointerUp={(e) => {
+        // Fecha so se o gesto comecou E terminou no fundo (clique explicito fora).
+        if (downOnBackdrop.current && e.target === e.currentTarget) onClose();
+        downOnBackdrop.current = false;
+      }}
+    >
+      <div className="modal" onPointerDown={(e) => e.stopPropagation()}>
         <div className="modal__head">
           <h3>{title}</h3>
           <button className="btn btn--icon btn--ghost" onClick={onClose} aria-label="Fechar">

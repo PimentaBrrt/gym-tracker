@@ -16,11 +16,17 @@ import ExerciseCard from "@/components/ExerciseCard";
 import { IconPlus, IconReset, IconCheck, IconStar, IconTrophy } from "@/components/Icons";
 import type { Exercise, LibraryExercise } from "@/types";
 
+// Os campos numericos sao guardados como STRING para permitir vazio enquanto
+// digita (sem forcar 0/1) e sem zero grudado. Sao normalizados so no submit.
 interface FormState {
-  name: string; sets: number; reps: number; weights: number[];
-  sameWeight: boolean; rest_time: number; notes: string;
+  name: string; sets: string; reps: string; weights: string[];
+  sameWeight: boolean; rest_time: string; notes: string;
 }
-const newForm = (): FormState => ({ name: "", sets: 3, reps: 10, weights: [0, 0, 0], sameWeight: true, rest_time: 90, notes: "" });
+const newForm = (): FormState => ({ name: "", sets: "3", reps: "10", weights: [], sameWeight: true, rest_time: "90", notes: "" });
+
+const onlyDigits = (v: string) => v.replace(/[^0-9]/g, "");
+const onlyDecimal = (v: string) => v.replace(/[^0-9.,]/g, "").replace(",", ".").replace(/(\..*)\./g, "$1");
+const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 
 export default function WorkoutDetailPage() {
   const { id } = useParams();
@@ -48,20 +54,17 @@ export default function WorkoutDetailPage() {
   const [deleting, setDeleting] = useState<Exercise | null>(null);
   const [form, setForm] = useState<FormState>(newForm());
 
-  // ---- helpers do formulario ----
-  const applySets = (n: number) => {
-    const count = Math.max(1, Math.min(12, Math.floor(n) || 1));
+  // Quantas series para renderizar os campos de carga (fallback 1 enquanto vazio).
+  const setsCount = clamp(parseInt(form.sets, 10) || 1, 1, 12);
+
+  const setWeightAt = (i: number, raw: string) =>
     setForm((f) => {
-      const nw = Array.from({ length: count }, (_, i) => f.weights[i] ?? f.weights[f.weights.length - 1] ?? 0);
-      return { ...f, sets: count, weights: nw };
+      const nw = [...f.weights];
+      while (nw.length <= i) nw.push("");
+      nw[i] = onlyDecimal(raw);
+      return { ...f, weights: nw };
     });
-  };
-  const setWeightAt = (i: number, v: number) =>
-    setForm((f) => { const nw = [...f.weights]; nw[i] = v; return { ...f, weights: nw }; });
-  const setAllWeights = (v: number) => setForm((f) => ({ ...f, weights: Array(f.sets).fill(v) }));
-  const toggleSame = () => setForm((f) => f.sameWeight
-    ? { ...f, sameWeight: false }
-    : { ...f, sameWeight: true, weights: Array(f.sets).fill(f.weights[0] ?? 0) });
+  const toggleSame = () => setForm((f) => ({ ...f, sameWeight: !f.sameWeight }));
 
   // ---- Sugestao de progressao: 3+ execucoes seguidas com a mesma carga ----
   const suggestions = useMemo(() => {
@@ -79,15 +82,17 @@ export default function WorkoutDetailPage() {
   }, [exercises, history]);
 
   const buildPayload = () => {
-    const weights = (form.sameWeight ? Array(form.sets).fill(form.weights[0] ?? 0) : form.weights.slice(0, form.sets))
-      .map((w) => Number(w) || 0);
+    const sets = clamp(parseInt(form.sets, 10) || 1, 1, 12);
+    const reps = Math.max(1, parseInt(form.reps, 10) || 1);
+    const rest = Math.max(5, parseInt(form.rest_time, 10) || 90);
+    const weights = form.sameWeight
+      ? Array(sets).fill(parseFloat(form.weights[0]) || 0)
+      : Array.from({ length: sets }, (_, i) => parseFloat(form.weights[i]) || 0);
     return {
       name: form.name.trim(),
-      sets: form.sets,
-      reps: Number(form.reps) || 1,
-      weights,
+      sets, reps, weights,
       current_weight: maxWeight(weights),
-      rest_time: Number(form.rest_time) || 90,
+      rest_time: rest,
       notes: form.notes.trim() || null,
     };
   };
@@ -97,8 +102,13 @@ export default function WorkoutDetailPage() {
     const w = exWeights(ex);
     setEditing(ex);
     setForm({
-      name: ex.name, sets: ex.sets || w.length, reps: ex.reps || 10, weights: w,
-      sameWeight: w.every((x) => x === w[0]), rest_time: ex.rest_time, notes: ex.notes ?? "",
+      name: ex.name,
+      sets: String(ex.sets || w.length || 1),
+      reps: String(ex.reps || 10),
+      weights: w.map(String),
+      sameWeight: w.every((x) => x === w[0]),
+      rest_time: String(ex.rest_time),
+      notes: ex.notes ?? "",
     });
   };
   const applyFavorite = (l: LibraryExercise) => {
@@ -106,8 +116,13 @@ export default function WorkoutDetailPage() {
       ? l.default_weights.map(Number)
       : Array(l.default_sets || 3).fill(Number(l.default_weight) || 0);
     setForm({
-      name: l.name, sets: l.default_sets || w.length, reps: l.default_reps || 10, weights: w,
-      sameWeight: w.every((x) => x === w[0]), rest_time: l.default_rest, notes: "",
+      name: l.name,
+      sets: String(l.default_sets || w.length || 1),
+      reps: String(l.default_reps || 10),
+      weights: w.map(String),
+      sameWeight: w.every((x) => x === w[0]),
+      rest_time: String(l.default_rest),
+      notes: "",
     });
   };
 
@@ -231,10 +246,18 @@ export default function WorkoutDetailPage() {
 
           <div className="row" style={{ gap: 12 }}>
             <div className="field" style={{ flex: 1 }}><label>Séries</label>
-              <input type="number" inputMode="numeric" min={1} max={12} value={form.sets} onChange={(e) => applySets(Number(e.target.value))} />
+              <input
+                type="text" inputMode="numeric" value={form.sets} placeholder="3"
+                onChange={(e) => setForm({ ...form, sets: onlyDigits(e.target.value) })}
+                onBlur={() => setForm((f) => ({ ...f, sets: String(clamp(parseInt(f.sets, 10) || 1, 1, 12)) }))}
+              />
             </div>
             <div className="field" style={{ flex: 1 }}><label>Repetições</label>
-              <input type="number" inputMode="numeric" min={1} value={form.reps} onChange={(e) => setForm({ ...form, reps: Number(e.target.value) })} />
+              <input
+                type="text" inputMode="numeric" value={form.reps} placeholder="10"
+                onChange={(e) => setForm({ ...form, reps: onlyDigits(e.target.value) })}
+                onBlur={() => setForm((f) => ({ ...f, reps: String(Math.max(1, parseInt(f.reps, 10) || 1)) }))}
+              />
             </div>
           </div>
 
@@ -246,25 +269,31 @@ export default function WorkoutDetailPage() {
               </button>
             </div>
             {form.sameWeight ? (
-              <input type="number" inputMode="decimal" step="0.5" value={form.weights[0] ?? 0}
-                onChange={(e) => setAllWeights(Number(e.target.value))} placeholder="Carga (kg)" />
+              <input
+                type="text" inputMode="decimal" value={form.weights[0] ?? ""} placeholder="0"
+                onChange={(e) => setWeightAt(0, e.target.value)}
+              />
             ) : (
               <div className="weights-grid">
-                {Array.from({ length: form.sets }).map((_, i) => (
+                {Array.from({ length: setsCount }).map((_, i) => (
                   <div className="weight-set" key={i}>
                     <span className="weight-set__label">Série {i + 1}</span>
-                    <input type="number" inputMode="decimal" step="0.5" value={form.weights[i] ?? 0}
-                      onChange={(e) => setWeightAt(i, Number(e.target.value))} />
+                    <input
+                      type="text" inputMode="decimal" value={form.weights[i] ?? ""} placeholder="0"
+                      onChange={(e) => setWeightAt(i, e.target.value)}
+                    />
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="row" style={{ gap: 12 }}>
-            <div className="field" style={{ flex: 1 }}><label>Descanso (s)</label>
-              <input type="number" inputMode="numeric" step="5" value={form.rest_time} onChange={(e) => setForm({ ...form, rest_time: Number(e.target.value) })} />
-            </div>
+          <div className="field"><label>Descanso (s)</label>
+            <input
+              type="text" inputMode="numeric" value={form.rest_time} placeholder="90"
+              onChange={(e) => setForm({ ...form, rest_time: onlyDigits(e.target.value) })}
+              onBlur={() => setForm((f) => ({ ...f, rest_time: String(Math.max(5, parseInt(f.rest_time, 10) || 90)) }))}
+            />
           </div>
           <div className="field"><label>Observações (opcional)</label>
             <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Ex.: pegada fechada" />
