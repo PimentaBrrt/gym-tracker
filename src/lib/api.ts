@@ -141,7 +141,7 @@ export const libraryApi = {
       .from("exercise_library").select("*").eq("user_id", userId).order("name");
     return ok(data, error);
   },
-  async add(userId: string, input: { name: string; default_weight: number; default_sets: number; default_reps: number; default_weights: number[]; default_rest: number }): Promise<LibraryExercise> {
+  async add(userId: string, input: { name: string; default_weight: number; default_sets: number; default_reps: number; default_weights: number[]; default_notes?: string | null; default_rest: number }): Promise<LibraryExercise> {
     // Idempotente: se ja existe um favorito com o mesmo nome (case-insensitive)
     // para este usuario, atualiza os specs em vez de criar um duplicado.
     const { data: existing, error: findErr } = await supabase
@@ -154,7 +154,7 @@ export const libraryApi = {
     if (existing && existing.length > 0) {
       const { data, error } = await supabase
         .from("exercise_library")
-        .update({ default_weight: input.default_weight, default_sets: input.default_sets, default_reps: input.default_reps, default_weights: input.default_weights, default_rest: input.default_rest })
+        .update({ default_weight: input.default_weight, default_sets: input.default_sets, default_reps: input.default_reps, default_weights: input.default_weights, default_notes: input.default_notes ?? null, default_rest: input.default_rest })
         .eq("id", existing[0].id)
         .select()
         .single();

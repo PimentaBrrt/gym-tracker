@@ -8,7 +8,7 @@ import { useUserHistory } from "@/hooks/useHistory";
 import { useLibrary, useAddToLibrary } from "@/hooks/useLibrary";
 import { useSessionStore } from "@/store/sessionStore";
 import { useToast } from "@/store/toastStore";
-import { exWeights, maxWeight } from "@/lib/exercise";
+import { exWeights, maxWeight, formatWeights } from "@/lib/exercise";
 import Header from "@/components/Header";
 import Modal from "@/components/Modal";
 import Confirm from "@/components/Confirm";
@@ -53,6 +53,7 @@ export default function WorkoutDetailPage() {
   const [editing, setEditing] = useState<Exercise | null>(null);
   const [deleting, setDeleting] = useState<Exercise | null>(null);
   const [form, setForm] = useState<FormState>(newForm());
+  const [showPicker, setShowPicker] = useState(false);
 
   // Quantas series para renderizar os campos de carga (fallback 1 enquanto vazio).
   const setsCount = clamp(parseInt(form.sets, 10) || 1, 1, 12);
@@ -122,8 +123,9 @@ export default function WorkoutDetailPage() {
       weights: w.map(String),
       sameWeight: w.every((x) => x === w[0]),
       rest_time: String(l.default_rest),
-      notes: "",
+      notes: l.default_notes ?? "",
     });
+    setShowPicker(false);
   };
 
   const submitCreate = async (e: React.FormEvent) => {
@@ -157,7 +159,7 @@ export default function WorkoutDetailPage() {
     const w = exWeights(ex);
     await addToLibrary.mutateAsync({
       name: ex.name, default_weight: maxWeight(w), default_sets: ex.sets,
-      default_reps: ex.reps, default_weights: w, default_rest: ex.rest_time,
+      default_reps: ex.reps, default_weights: w, default_notes: ex.notes, default_rest: ex.rest_time,
     });
     toast("Salvo nos favoritos");
   };
@@ -229,14 +231,9 @@ export default function WorkoutDetailPage() {
         <form onSubmit={editing ? submitEdit : submitCreate}>
           {!editing && library && library.length > 0 && (
             <div className="field">
-              <label>Da biblioteca</label>
-              <div className="row wrap">
-                {library.map((l) => (
-                  <button type="button" key={l.id} className="chip" onClick={() => applyFavorite(l)}>
-                    <IconStar width={13} height={13} /> {l.name}
-                  </button>
-                ))}
-              </div>
+              <button type="button" className="btn btn--ghost btn--block" onClick={() => setShowPicker(true)}>
+                <IconStar width={16} height={16} /> Selecionar da Biblioteca
+              </button>
             </div>
           )}
 
@@ -302,6 +299,27 @@ export default function WorkoutDetailPage() {
             {editing ? "Salvar" : "Adicionar"}
           </button>
         </form>
+      </Modal>
+
+      {/* Picker: selecionar da biblioteca */}
+      <Modal open={showPicker} title="Selecionar da Biblioteca" onClose={() => setShowPicker(false)}>
+        {!library?.length ? (
+          <div className="empty"><p>Nenhum favorito ainda.</p></div>
+        ) : (
+          <div className="list">
+            {library.map((l) => (
+              <button type="button" key={l.id} className="picker-row" onClick={() => applyFavorite(l)}>
+                <span className="picker-row__star"><IconStar width={16} height={16} /></span>
+                <span className="picker-row__body">
+                  <span className="picker-row__name">{l.name}</span>
+                  <span className="picker-row__meta numeric">
+                    {l.default_sets} × {l.default_reps} · {formatWeights(l.default_weights?.length ? l.default_weights.map(Number) : [Number(l.default_weight)])} · descanso {l.default_rest}s
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </Modal>
 
       <Confirm

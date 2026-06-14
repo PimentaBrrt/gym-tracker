@@ -66,6 +66,7 @@ create table if not exists public.exercise_library (
   default_sets   int not null default 3,
   default_reps   int not null default 10,
   default_weights jsonb not null default '[]'::jsonb,
+  default_notes  text,
   default_rest   int not null default 90,
   created_at     timestamptz not null default now()
 );
@@ -77,6 +78,7 @@ alter table public.exercises         add column if not exists weights jsonb not 
 alter table public.exercise_library  add column if not exists default_sets int not null default 3;
 alter table public.exercise_library  add column if not exists default_reps int not null default 10;
 alter table public.exercise_library  add column if not exists default_weights jsonb not null default '[]'::jsonb;
+alter table public.exercise_library  add column if not exists default_notes text;
 
 -- ---------- APP SETTINGS (senhas editaveis pelo admin, guardadas como hash) ----------
 create table if not exists public.app_settings (

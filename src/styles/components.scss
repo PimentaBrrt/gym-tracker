@@ -220,3 +220,16 @@
   .weight-set__label { font-size: 12px; font-weight: 600; color: var(--neutral); }
   input { padding: 10px 12px; }
 }
+
+// ---------- Picker da biblioteca ----------
+.picker-row { @include card; @include tap; width: 100%; text-align: left; padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px; transition: border-color .15s ease, transform .1s ease;
+  &:active { transform: scale(.99); }
+  &:hover { border-color: var(--blue); }
+  .picker-row__star { color: var(--warning); display: grid; place-items: center; }
+  .picker-row__body { display: flex; flex-direction: column; min-width: 0; }
+  .picker-row__name { font-family: var(--font-display); font-weight: 700; }
+  .picker-row__meta { font-size: 13px; color: var(--neutral); margin-top: 2px; }
+}
+
+.lib-row__notes { font-size: 13px; color: var(--text-2); margin-top: 4px; }

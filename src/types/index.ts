@@ -52,6 +52,7 @@ export interface LibraryExercise {
   default_sets: number;
   default_reps: number;
   default_weights: number[];
+  default_notes: string | null;
   default_rest: number;
   created_at: string;
 }

@@ -12,7 +12,7 @@ export function useLibrary(userId: string | null) {
 export function useAddToLibrary(userId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { name: string; default_weight: number; default_sets: number; default_reps: number; default_weights: number[]; default_rest: number }) =>
+    mutationFn: (v: { name: string; default_weight: number; default_sets: number; default_reps: number; default_weights: number[]; default_notes?: string | null; default_rest: number }) =>
       libraryApi.add(userId, v),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["library", userId] }),
   });
