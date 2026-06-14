@@ -1,0 +1,57 @@
+export interface User {
+  id: string;
+  name: string;
+  email: string | null;
+  is_admin: boolean;
+  avatar_hue: number;
+  created_at: string;
+}
+
+export interface Workout {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface Exercise {
+  id: string;
+  workout_id: string;
+  name: string;
+  current_weight: number;
+  rest_time: number;
+  notes: string | null;
+  position: number;
+  created_at: string;
+}
+
+export interface WorkoutSession {
+  id: string;
+  workout_id: string;
+  user_id: string;
+  completed_at: string;
+}
+
+export interface ExerciseHistory {
+  id: string;
+  exercise_id: string;
+  workout_session_id: string;
+  exercise_name: string;
+  weight: number;
+  created_at: string;
+}
+
+export interface LibraryExercise {
+  id: string;
+  user_id: string;
+  name: string;
+  default_weight: number;
+  default_rest: number;
+  created_at: string;
+}
+
+export interface WorkoutWithMeta extends Workout {
+  exerciseCount: number;
+  lastCompletedAt: string | null;
+  sessionCount: number;
+}
