@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Exercise } from "@/types";
 import { useExerciseHistory } from "@/hooks/useHistory";
+import { exWeights, formatWeights } from "@/lib/exercise";
 import RestTimer from "./RestTimer";
 import WeightChart from "./WeightChart";
 import { IconCheck, IconEdit, IconTrash, IconChart, IconStar } from "./Icons";
@@ -17,6 +18,7 @@ interface Props {
 export default function ExerciseCard({ exercise, done, onToggle, onEdit, onDelete, onFavorite }: Props) {
   const [open, setOpen] = useState(false);
   const { data: history } = useExerciseHistory(open ? exercise.id : undefined);
+  const weights = exWeights(exercise);
 
   return (
     <div className={"exercise-card" + (done ? " is-done" : "")}>
@@ -32,10 +34,19 @@ export default function ExerciseCard({ exercise, done, onToggle, onEdit, onDelet
         <div className="exercise-card__info" onClick={() => setOpen((v) => !v)}>
           <div className="exercise-card__name">{exercise.name}</div>
           <div className="exercise-card__meta numeric">
-            <span className="weight">{exercise.current_weight} kg</span>
+            <span className="sets">{exercise.sets} × {exercise.reps}</span>
+            <span className="dot">·</span>
+            <span className="weight">{formatWeights(weights)}</span>
             <span className="dot">·</span>
             <span>descanso {exercise.rest_time}s</span>
           </div>
+          {weights.length > 1 && !weights.every((w) => w === weights[0]) && (
+            <div className="exercise-card__sets numeric">
+              {weights.map((w, i) => (
+                <span key={i} className="set-pill">S{i + 1}: {w}kg</span>
+              ))}
+            </div>
+          )}
           {exercise.notes && <div className="exercise-card__notes">{exercise.notes}</div>}
         </div>
 

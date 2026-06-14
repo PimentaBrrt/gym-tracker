@@ -29,7 +29,10 @@ create table if not exists public.exercises (
   id             uuid primary key default gen_random_uuid(),
   workout_id     uuid not null references public.workouts(id) on delete cascade,
   name           text not null,
-  current_weight numeric not null default 0,
+  current_weight numeric not null default 0,   -- carga representativa (maior serie); usada nos graficos/stats
+  sets           int not null default 3,        -- numero de series
+  reps           int not null default 10,       -- repeticoes por serie
+  weights        jsonb not null default '[]'::jsonb, -- carga de cada serie (pode variar)
   rest_time      int not null default 90,
   notes          text,
   position       int not null default 0,
@@ -56,13 +59,24 @@ create table if not exists public.exercise_history (
 
 -- ---------- EXERCISE LIBRARY (favoritos / biblioteca pessoal) ----------
 create table if not exists public.exercise_library (
-  id            uuid primary key default gen_random_uuid(),
-  user_id       uuid not null references public.users(id) on delete cascade,
-  name          text not null,
+  id             uuid primary key default gen_random_uuid(),
+  user_id        uuid not null references public.users(id) on delete cascade,
+  name           text not null,
   default_weight numeric not null default 0,
-  default_rest  int not null default 90,
-  created_at    timestamptz not null default now()
+  default_sets   int not null default 3,
+  default_reps   int not null default 10,
+  default_weights jsonb not null default '[]'::jsonb,
+  default_rest   int not null default 90,
+  created_at     timestamptz not null default now()
 );
+
+-- ---------- Migracoes para bases ja existentes (idempotentes) ----------
+alter table public.exercises         add column if not exists sets int not null default 3;
+alter table public.exercises         add column if not exists reps int not null default 10;
+alter table public.exercises         add column if not exists weights jsonb not null default '[]'::jsonb;
+alter table public.exercise_library  add column if not exists default_sets int not null default 3;
+alter table public.exercise_library  add column if not exists default_reps int not null default 10;
+alter table public.exercise_library  add column if not exists default_weights jsonb not null default '[]'::jsonb;
 
 -- ---------- APP SETTINGS (senhas editaveis pelo admin, guardadas como hash) ----------
 create table if not exists public.app_settings (
@@ -94,10 +108,7 @@ insert into public.app_settings (key, value) values
 on conflict (key) do nothing;
 
 -- ============================================================
--- RLS: este app usa um portao de senha compartilhado no cliente
--- (nao usa Supabase Auth). Para um app familiar com a anon key,
--- as policies abaixo liberam acesso via anon. Ajuste se desejar
--- maior isolamento.
+-- RLS (app familiar com a anon key). Ajuste se desejar isolamento.
 -- ============================================================
 alter table public.users            enable row level security;
 alter table public.workouts         enable row level security;

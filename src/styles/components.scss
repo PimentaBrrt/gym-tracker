@@ -206,3 +206,17 @@
   .lib-row__name { font-family: var(--font-display); font-weight: 700; }
   .lib-row__meta { font-size: 13px; color: var(--neutral); margin-top: 2px; }
 }
+
+// ---------- Set pills (cargas por serie) ----------
+.exercise-card__sets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+  .set-pill { font-size: 12px; font-weight: 600; color: var(--text-2);
+    background: var(--bg-elevated); border: 1px solid var(--line); border-radius: 8px; padding: 3px 8px; }
+}
+.exercise-card__meta .sets { color: var(--text-2); font-weight: 700; }
+
+// ---------- Cargas por serie no formulario ----------
+.weights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.weight-set { display: flex; flex-direction: column; gap: 4px;
+  .weight-set__label { font-size: 12px; font-weight: 600; color: var(--neutral); }
+  input { padding: 10px 12px; }
+}

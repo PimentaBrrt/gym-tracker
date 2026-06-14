@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { workoutsApi, exercisesApi, sessionsApi } from "@/lib/api";
 import type { WorkoutWithMeta } from "@/types";
+import { exWeights } from "@/lib/exercise";
 
 export function useWorkouts(userId: string | null) {
   return useQuery({
@@ -70,6 +71,9 @@ export function useDuplicateWorkout(userId: string) {
         await exercisesApi.create(copy.id, {
           name: e.name,
           current_weight: e.current_weight,
+          sets: e.sets,
+          reps: e.reps,
+          weights: exWeights(e),
           rest_time: e.rest_time,
           notes: e.notes,
           position: e.position,

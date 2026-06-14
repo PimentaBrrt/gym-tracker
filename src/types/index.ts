@@ -18,7 +18,10 @@ export interface Exercise {
   id: string;
   workout_id: string;
   name: string;
-  current_weight: number;
+  current_weight: number; // carga representativa (maior serie) p/ graficos/stats
+  sets: number;           // numero de series
+  reps: number;           // repeticoes por serie
+  weights: number[];      // carga de cada serie (pode variar)
   rest_time: number;
   notes: string | null;
   position: number;
@@ -46,6 +49,9 @@ export interface LibraryExercise {
   user_id: string;
   name: string;
   default_weight: number;
+  default_sets: number;
+  default_reps: number;
+  default_weights: number[];
   default_rest: number;
   created_at: string;
 }

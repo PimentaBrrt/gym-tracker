@@ -5,6 +5,7 @@ import { useToast } from "@/store/toastStore";
 import Header from "@/components/Header";
 import Confirm from "@/components/Confirm";
 import { IconStar, IconTrash } from "@/components/Icons";
+import { formatWeights } from "@/lib/exercise";
 import type { LibraryExercise } from "@/types";
 
 export default function LibraryPage() {
@@ -37,7 +38,9 @@ export default function LibraryPage() {
               <span className="lib-row__star"><IconStar width={18} height={18} /></span>
               <div className="lib-row__body">
                 <div className="lib-row__name">{l.name}</div>
-                <div className="lib-row__meta numeric">{l.default_weight} kg · descanso {l.default_rest}s</div>
+                <div className="lib-row__meta numeric">
+                  {l.default_sets} × {l.default_reps} · {formatWeights((l.default_weights?.length ? l.default_weights.map(Number) : [Number(l.default_weight)]))} · descanso {l.default_rest}s
+                </div>
               </div>
               <button className="btn btn--icon btn--danger btn--sm" onClick={() => setDeleting(l)} aria-label="Remover">
                 <IconTrash width={17} height={17} />

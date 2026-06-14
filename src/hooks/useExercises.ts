@@ -13,7 +13,7 @@ export function useExercises(workoutId: string | undefined) {
 export function useCreateExercise(workoutId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { name: string; current_weight: number; rest_time: number; notes?: string | null; position?: number }) =>
+    mutationFn: (input: { name: string; current_weight: number; sets: number; reps: number; weights: number[]; rest_time: number; notes?: string | null; position?: number }) =>
       exercisesApi.create(workoutId, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["exercises", workoutId] }),
   });
