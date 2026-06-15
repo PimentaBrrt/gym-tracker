@@ -6,6 +6,7 @@ import { useExercises, useCreateExercise, useUpdateExercise, useDeleteExercise }
 import { useCompleteWorkout } from "@/hooks/useSessions";
 import { useUserHistory } from "@/hooks/useHistory";
 import { useLibrary, useAddToLibrary } from "@/hooks/useLibrary";
+import { useFavoriteWorkout } from "@/hooks/useTemplates";
 import { useSessionStore } from "@/store/sessionStore";
 import { useToast } from "@/store/toastStore";
 import { exWeights, maxWeight, formatWeights } from "@/lib/exercise";
@@ -40,6 +41,7 @@ export default function WorkoutDetailPage() {
   const { data: history } = useUserHistory(userId);
   const { data: library } = useLibrary(userId);
   const addToLibrary = useAddToLibrary(userId);
+  const favWorkout = useFavoriteWorkout(userId);
   const toast = useToast((s) => s.show);
 
   const { completed, toggle, reset } = useSessionStore();
@@ -170,7 +172,15 @@ export default function WorkoutDetailPage() {
         title={workout?.name ?? "Treino"}
         subtitle="Dia de treino"
         back
-        right={<button className="btn btn--ghost btn--sm" onClick={() => { reset(id!); toast("Treino reiniciado"); }}><IconReset width={16} height={16} /> Reset</button>}
+        right={
+          <>
+            <button className="btn btn--ghost btn--icon btn--sm" aria-label="Favoritar treino"
+              onClick={async () => { await favWorkout.mutateAsync(id!); toast("Treino salvo nos favoritos"); }}>
+              <IconStar width={17} height={17} />
+            </button>
+            <button className="btn btn--ghost btn--sm" onClick={() => { reset(id!); toast("Treino reiniciado"); }}><IconReset width={16} height={16} /> Reset</button>
+          </>
+        }
       />
 
       {total > 0 && (

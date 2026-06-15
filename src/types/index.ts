@@ -62,3 +62,21 @@ export interface WorkoutWithMeta extends Workout {
   lastCompletedAt: string | null;
   sessionCount: number;
 }
+
+export interface TemplateExercise {
+  name: string;
+  sets: number;
+  reps: number;
+  weights: number[];
+  rest_time: number;
+  notes: string | null;
+  position: number;
+}
+
+export interface WorkoutTemplate {
+  id: string;
+  user_id: string;
+  name: string;
+  exercises: TemplateExercise[];
+  created_at: string;
+}

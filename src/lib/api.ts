@@ -184,3 +184,62 @@ export const settingsApi = {
     if (error) throw new Error(error.message);
   },
 };
+
+// ---------------- WORKOUT TEMPLATES (treinos favoritos / compartilhaveis) ----------------
+import type { WorkoutTemplate, TemplateExercise } from "@/types";
+
+function weightsOf(e: Exercise): number[] {
+  const arr = Array.isArray(e.weights) ? e.weights.map(Number).filter((n) => !Number.isNaN(n)) : [];
+  if (arr.length) return arr;
+  return Array(Math.max(1, e.sets || 1)).fill(Number(e.current_weight) || 0);
+}
+
+export const templatesApi = {
+  async listByUser(userId: string): Promise<WorkoutTemplate[]> {
+    const { data, error } = await supabase
+      .from("workout_templates").select("*").eq("user_id", userId).order("created_at");
+    return ok(data, error);
+  },
+  // Favorita um treino: monta um snapshot dos exercicios. Idempotente por nome.
+  async addFromWorkout(userId: string, workoutId: string): Promise<WorkoutTemplate> {
+    const workout = await workoutsApi.get(workoutId);
+    const exercises = await exercisesApi.listByWorkout(workoutId);
+    const snapshot: TemplateExercise[] = exercises.map((e, i) => ({
+      name: e.name, sets: e.sets, reps: e.reps, weights: weightsOf(e),
+      rest_time: e.rest_time, notes: e.notes, position: e.position ?? i,
+    }));
+    const { data: existing, error: findErr } = await supabase
+      .from("workout_templates").select("id").eq("user_id", userId).ilike("name", workout.name).limit(1);
+    if (findErr) throw new Error(findErr.message);
+    if (existing && existing.length > 0) {
+      const { data, error } = await supabase
+        .from("workout_templates").update({ exercises: snapshot }).eq("id", existing[0].id).select().single();
+      return ok(data, error);
+    }
+    const { data, error } = await supabase
+      .from("workout_templates").insert({ user_id: userId, name: workout.name, exercises: snapshot }).select().single();
+    return ok(data, error);
+  },
+  async remove(id: string): Promise<void> {
+    const { error } = await supabase.from("workout_templates").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+  },
+  // Cria um treino real (+ exercicios) na conta do usuario a partir do template.
+  async instantiate(userId: string, templateId: string): Promise<void> {
+    const { data: tpl, error } = await supabase
+      .from("workout_templates").select("*").eq("id", templateId).single();
+    if (error) throw new Error(error.message);
+    const template = tpl as WorkoutTemplate;
+    const workout = await workoutsApi.create(userId, template.name);
+    const list = Array.isArray(template.exercises) ? template.exercises : [];
+    for (const e of list) {
+      const w = Array.isArray(e.weights) ? e.weights.map(Number) : [];
+      await exercisesApi.create(workout.id, {
+        name: e.name,
+        current_weight: w.length ? Math.max(...w) : 0,
+        sets: e.sets, reps: e.reps, weights: w,
+        rest_time: e.rest_time, notes: e.notes, position: e.position,
+      });
+    }
+  },
+};

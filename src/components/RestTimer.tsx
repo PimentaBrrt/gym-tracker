@@ -3,29 +3,6 @@ import { IconPlay, IconPause, IconReset } from "./Icons";
 
 interface Props { defaultSeconds: number; }
 
-function beep() {
-  try {
-    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new Ctx();
-    const play = (freq: number, start: number, dur: number) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.frequency.value = freq;
-      osc.type = "sine";
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime + start);
-      gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + dur);
-      osc.start(ctx.currentTime + start);
-      osc.stop(ctx.currentTime + start + dur);
-    };
-    play(880, 0, 0.18);
-    play(1320, 0.2, 0.25);
-    setTimeout(() => ctx.close(), 800);
-  } catch { /* audio indisponivel */ }
-}
-
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 export default function RestTimer({ defaultSeconds }: Props) {
@@ -33,35 +10,121 @@ export default function RestTimer({ defaultSeconds }: Props) {
   const [remaining, setRemaining] = useState(defaultSeconds);
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
-  const ref = useRef<number | null>(null);
+
+  const endAtRef = useRef<number | null>(null);   // timestamp absoluto do fim
+  const tickRef = useRef<number | null>(null);
+  const audioRef = useRef<AudioContext | null>(null);
+  const firedRef = useRef(false);
 
   useEffect(() => { setTotal(defaultSeconds); setRemaining(defaultSeconds); }, [defaultSeconds]);
 
-  useEffect(() => {
-    if (!running) return;
-    ref.current = window.setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
-          window.clearInterval(ref.current!);
-          setRunning(false);
-          setFinished(true);
-          beep();
-          if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-          return 0;
-        }
-        return r - 1;
-      });
-    }, 1000);
-    return () => { if (ref.current) window.clearInterval(ref.current); };
-  }, [running]);
+  // Cria/retoma o AudioContext DENTRO de um gesto do usuario (toque no play).
+  // Sem isso o som nao toca no celular (so no desktop).
+  const ensureAudio = () => {
+    try {
+      if (!audioRef.current) {
+        const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        audioRef.current = new Ctx();
+      }
+      if (audioRef.current.state === "suspended") void audioRef.current.resume();
+    } catch { /* audio indisponivel */ }
+    return audioRef.current;
+  };
+
+  const alarm = () => {
+    const ctx = audioRef.current;
+    if (ctx && ctx.state === "running") {
+      try {
+        const t0 = ctx.currentTime;
+        const beep = (freq: number, start: number, dur: number) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.value = freq;
+          osc.connect(gain); gain.connect(ctx.destination);
+          gain.gain.setValueAtTime(0.0001, t0 + start);
+          gain.gain.exponentialRampToValueAtTime(0.5, t0 + start + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t0 + start + dur);
+          osc.start(t0 + start);
+          osc.stop(t0 + start + dur);
+        };
+        beep(880, 0, 0.22); beep(1175, 0.26, 0.22); beep(1568, 0.52, 0.32);
+      } catch { /* ignore */ }
+    }
+    // Vibracao: funciona no Android (em primeiro plano). iOS Safari nao suporta.
+    if (typeof navigator.vibrate === "function") navigator.vibrate([300, 150, 300, 150, 400]);
+  };
+
+  const stopTick = () => { if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; } };
+
+  const fire = () => {
+    if (firedRef.current) return;
+    firedRef.current = true;
+    stopTick();
+    endAtRef.current = null;
+    setRunning(false);
+    setRemaining(0);
+    setFinished(true);
+    alarm();
+  };
+
+  const startTick = () => {
+    stopTick();
+    tickRef.current = window.setInterval(() => {
+      const end = endAtRef.current;
+      if (end == null) return;
+      const rem = Math.max(0, Math.round((end - Date.now()) / 1000));
+      setRemaining(rem);
+      if (Date.now() >= end) fire();
+    }, 250);
+  };
+
+  const play = () => {
+    ensureAudio();
+    if (finished) { restart(); return; }
+    firedRef.current = false;
+    endAtRef.current = Date.now() + remaining * 1000;
+    setRunning(true);
+    startTick();
+  };
+  const pause = () => {
+    if (endAtRef.current != null) setRemaining(Math.max(0, Math.round((endAtRef.current - Date.now()) / 1000)));
+    endAtRef.current = null;
+    stopTick();
+    setRunning(false);
+  };
+  const restart = () => {
+    stopTick(); endAtRef.current = null; firedRef.current = false;
+    setRunning(false); setFinished(false); setRemaining(total);
+  };
+  const toggle = () => { if (finished) restart(); else if (running) pause(); else play(); };
 
   const adjust = (delta: number) => {
-    setFinished(false);
+    setFinished(false); firedRef.current = false;
     setTotal((t) => Math.max(15, t + delta));
-    setRemaining((r) => Math.max(15, r + delta));
+    setRemaining((r) => {
+      const nr = Math.max(running ? 0 : 15, r + delta);
+      if (running) endAtRef.current = Date.now() + nr * 1000;
+      return nr;
+    });
   };
-  const toggle = () => { if (finished) restart(); else setRunning((v) => !v); };
-  const restart = () => { setRunning(false); setFinished(false); setRemaining(total); };
+
+  // Ao voltar para o app, recalcula pelo timestamp (corrige a pausa do timer em
+  // segundo plano) e dispara o alarme se ja tinha acabado enquanto estava fora.
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState !== "visible") return;
+      const end = endAtRef.current;
+      if (end == null) return;
+      const rem = Math.max(0, Math.round((end - Date.now()) / 1000));
+      setRemaining(rem);
+      if (Date.now() >= end) fire();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  useEffect(() => () => stopTick(), []);
 
   const pct = total > 0 ? (remaining / total) * 100 : 0;
   const R = 34, C = 2 * Math.PI * R;

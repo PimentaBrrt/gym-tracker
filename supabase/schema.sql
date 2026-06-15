@@ -71,6 +71,16 @@ create table if not exists public.exercise_library (
   created_at     timestamptz not null default now()
 );
 
+-- ---------- WORKOUT TEMPLATES (treinos favoritos / compartilhaveis) ----------
+create table if not exists public.workout_templates (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references public.users(id) on delete cascade,
+  name       text not null,
+  exercises  jsonb not null default '[]'::jsonb, -- snapshot dos exercicios do treino
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_templates_user on public.workout_templates(user_id);
+
 -- ---------- Migracoes para bases ja existentes (idempotentes) ----------
 alter table public.exercises         add column if not exists sets int not null default 3;
 alter table public.exercises         add column if not exists reps int not null default 10;
@@ -118,13 +128,14 @@ alter table public.exercises        enable row level security;
 alter table public.workout_sessions enable row level security;
 alter table public.exercise_history enable row level security;
 alter table public.exercise_library enable row level security;
+alter table public.workout_templates enable row level security;
 alter table public.app_settings     enable row level security;
 
 do $$
 declare t text;
 begin
   foreach t in array array[
-    'users','workouts','exercises','workout_sessions','exercise_history','exercise_library','app_settings'
+    'users','workouts','exercises','workout_sessions','exercise_history','exercise_library','workout_templates','app_settings'
   ] loop
     execute format('drop policy if exists "anon_all_%1$s" on public.%1$s;', t);
     execute format(
