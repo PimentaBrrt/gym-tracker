@@ -32,6 +32,13 @@ export default function HistoryPage() {
     new Date(iso).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
   const fmtTime = (iso: string) =>
     new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const fmtDuration = (secs: number) => {
+    if (!secs || secs <= 0) return "—";
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = Math.floor(secs - (h * 3600) - (m * 60));
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
 
   return (
     <div className="page">
@@ -55,7 +62,7 @@ export default function HistoryPage() {
                   <div style={{ minWidth: 0 }}>
                     <div className="history-row__date">{workoutName.get(s.workout_id) ?? "Treino"}</div>
                     <div className="history-row__sub numeric">
-                      {fmtDate(s.completed_at)} · {fmtTime(s.completed_at)} · {items.length} exercícios
+                      {fmtDate(s.completed_at)} · {fmtTime(s.completed_at)} · {items.length} exercícios · {fmtDuration(s.duration_seconds)}
                     </div>
                     {items.length > 0 && (
                       <div className="history-row__sub" style={{ marginTop: 4 }}>

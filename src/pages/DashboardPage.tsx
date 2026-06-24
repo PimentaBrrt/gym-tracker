@@ -89,8 +89,8 @@ export default function DashboardPage() {
         </div>
         <div className="stat-card">
           <div className="stat-card__icon"><IconChart width={20} height={20} /></div>
-          <div className="stat-card__value numeric">{Math.floor(minutes / 60)}h{minutes % 60}</div>
-          <div className="stat-card__label">Tempo treinado</div>
+          <div className="stat-card__value numeric">{String(Math.floor(minutes / 60)).padStart(2, "0")}:{String(minutes % 60).padStart(2, "0")}</div>
+          <div className="stat-card__label">Tempo total treinado</div>
         </div>
       </div>
 

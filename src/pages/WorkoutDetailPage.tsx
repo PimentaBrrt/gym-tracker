@@ -1,20 +1,19 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useWorkout } from "@/hooks/useWorkouts";
 import { useExercises, useCreateExercise, useUpdateExercise, useDeleteExercise } from "@/hooks/useExercises";
 import { useCompleteWorkout } from "@/hooks/useSessions";
-import { useUserHistory } from "@/hooks/useHistory";
 import { useLibrary, useAddToLibrary } from "@/hooks/useLibrary";
 import { useFavoriteWorkout } from "@/hooks/useTemplates";
 import { useSessionStore } from "@/store/sessionStore";
 import { useToast } from "@/store/toastStore";
-import { exWeights, maxWeight, formatWeights, avgWeight } from "@/lib/exercise";
+import { exWeights, maxWeight, formatWeights } from "@/lib/exercise";
 import Header from "@/components/Header";
 import Modal from "@/components/Modal";
 import Confirm from "@/components/Confirm";
 import ExerciseCard from "@/components/ExerciseCard";
-import { IconPlus, IconReset, IconCheck, IconStar, IconTrophy } from "@/components/Icons";
+import { IconPlus, IconReset, IconCheck, IconStar } from "@/components/Icons";
 import type { Exercise, LibraryExercise } from "@/types";
 
 // Os campos numericos sao guardados como STRING para permitir vazio enquanto
@@ -38,7 +37,6 @@ export default function WorkoutDetailPage() {
   const updateEx = useUpdateExercise(id!);
   const deleteEx = useDeleteExercise(id!);
   const complete = useCompleteWorkout();
-  const { data: history } = useUserHistory(userId);
   const { data: library } = useLibrary(userId);
   const addToLibrary = useAddToLibrary(userId);
   const favWorkout = useFavoriteWorkout(userId);
@@ -68,21 +66,6 @@ export default function WorkoutDetailPage() {
       return { ...f, weights: nw };
     });
   const toggleSame = () => setForm((f) => ({ ...f, sameWeight: !f.sameWeight }));
-
-  // ---- Sugestao de progressao: 3+ execucoes seguidas com a mesma carga ----
-  const suggestions = useMemo(() => {
-    if (!exercises || !history) return [];
-    const out: { exercise: Exercise; weight: number }[] = [];
-    for (const ex of exercises) {
-      const past = history.filter((h) => h.exercise_id === ex.id);
-      if (past.length < 3) continue;
-      const last3 = past.slice(-3).map((h) => Number(h.weight));
-      if (last3.every((w) => w === last3[0]) && last3[0] === avgWeight(exWeights(ex))) {
-        out.push({ exercise: ex, weight: last3[0] });
-      }
-    }
-    return out;
-  }, [exercises, history]);
 
   const buildPayload = () => {
     const sets = clamp(parseInt(form.sets, 10) || 1, 1, 12);
@@ -153,12 +136,6 @@ export default function WorkoutDetailPage() {
     if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
   };
 
-  const bump = async (ex: Exercise) => {
-    const w = exWeights(ex).map((x) => x + 2.5);
-    await updateEx.mutateAsync({ id: ex.id, patch: { weights: w, current_weight: maxWeight(w) } });
-    toast(`${ex.name}: +2,5kg em todas as séries`);
-  };
-
   const favorite = async (ex: Exercise) => {
     const w = exWeights(ex);
     await addToLibrary.mutateAsync({
@@ -194,21 +171,6 @@ export default function WorkoutDetailPage() {
           <div className="progress"><div className="progress__fill" style={{ width: `${pct}%` }} /></div>
         </div>
       )}
-
-      {suggestions.map((s) => (
-        <div className="suggestion" key={s.exercise.id} style={{ marginBottom: 12 }}>
-          <span style={{ color: "var(--warning)", marginTop: 2 }}><IconTrophy /></span>
-          <div style={{ flex: 1 }}>
-            <strong>Progressão inteligente</strong>
-            <p className="text-2" style={{ fontSize: 14 }}>
-              Você fez {s.exercise.name} com {s.weight}kg por 3 execuções seguidas. Aumentar a carga?
-            </p>
-            <button className="btn btn--primary btn--sm" style={{ marginTop: 8 }} onClick={() => bump(s.exercise)}>
-              +2,5kg em todas as séries
-            </button>
-          </div>
-        </div>
-      ))}
 
       <div className="list">
         {exercises?.map((ex) => (

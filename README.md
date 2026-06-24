@@ -2,7 +2,7 @@
 
 Aplicação web **mobile-first** (PWA) para acompanhamento de treinos de academia,
 com múltiplos perfis de usuário (estilo Netflix), histórico de cargas, gráficos de
-evolução, timer de descanso, progressão inteligente e um **painel de administrador**.
+evolução, timer de descanso e um **painel de administrador**.
 
 Stack: **React + TypeScript + Vite + SCSS + React Router + React Query + Zustand + Recharts**, backend **Supabase (PostgreSQL)**.
 
@@ -80,7 +80,7 @@ Ao entrar como **Admin**, aparece um botão de escudo no dashboard que leva ao p
 - Ao concluir todos os exercícios → registra uma execução e alimenta os gráficos
 - Timer de descanso por exercício (play/pause/restart, ±15s, som + vibração + destaque)
 - Histórico de treinos realizados (data/hora) + gráficos de evolução de carga (Recharts)
-- Dashboard, estatísticas, progressão inteligente, biblioteca de favoritos
+- Dashboard, estatísticas, biblioteca de favoritos
 - Exportação JSON / CSV
 - PWA instalável (manifest + service worker)
 
