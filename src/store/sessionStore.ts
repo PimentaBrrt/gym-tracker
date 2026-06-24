@@ -1,39 +1,48 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-// Estado de conclusao dos exercicios DURANTE a sessao (persistido localmente).
-type CompletedMap = Record<string, Record<string, boolean>>; // workoutId -> exerciseId -> done
+// Estado da sessao de treino (persistido localmente):
+// - counts: quantas series ja foram feitas em cada exercicio
+// - startedAt: instante em que a 1a serie de QUALQUER exercicio do treino comecou
+type CountMap = Record<string, Record<string, number>>; // workoutId -> exerciseId -> series feitas
+type StartMap = Record<string, number>;                  // workoutId -> timestamp (ms)
 
 interface SessionState {
-  completed: CompletedMap;
-  toggle: (workoutId: string, exerciseId: string) => void;
-  set: (workoutId: string, exerciseId: string, done: boolean) => void;
+  counts: CountMap;
+  startedAt: StartMap;
+  incr: (workoutId: string, exerciseId: string) => void;
+  resetExercise: (workoutId: string, exerciseId: string) => void;
   reset: (workoutId: string) => void;
-  isDone: (workoutId: string, exerciseId: string) => boolean;
-  doneCount: (workoutId: string) => number;
+  getCount: (workoutId: string, exerciseId: string) => number;
 }
 
 export const useSessionStore = create<SessionState>()(
   persist(
     (set, get) => ({
-      completed: {},
-      toggle: (w, e) =>
+      counts: {},
+      startedAt: {},
+      incr: (w, e) =>
         set((s) => {
-          const day = { ...(s.completed[w] ?? {}) };
-          day[e] = !day[e];
-          return { completed: { ...s.completed, [w]: day } };
+          const day = { ...(s.counts[w] ?? {}) };
+          day[e] = (day[e] ?? 0) + 1;
+          const startedAt = s.startedAt[w]
+            ? s.startedAt
+            : { ...s.startedAt, [w]: Date.now() }; // marca o inicio na 1a serie
+          return { counts: { ...s.counts, [w]: day }, startedAt };
         }),
-      set: (w, e, done) =>
+      resetExercise: (w, e) =>
         set((s) => {
-          const day = { ...(s.completed[w] ?? {}) };
-          day[e] = done;
-          return { completed: { ...s.completed, [w]: day } };
+          const day = { ...(s.counts[w] ?? {}) };
+          day[e] = 0;
+          return { counts: { ...s.counts, [w]: day } };
         }),
       reset: (w) =>
-        set((s) => ({ completed: { ...s.completed, [w]: {} } })),
-      isDone: (w, e) => Boolean(get().completed[w]?.[e]),
-      doneCount: (w) =>
-        Object.values(get().completed[w] ?? {}).filter(Boolean).length,
+        set((s) => {
+          const startedAt = { ...s.startedAt };
+          delete startedAt[w];
+          return { counts: { ...s.counts, [w]: {} }, startedAt };
+        }),
+      getCount: (w, e) => get().counts[w]?.[e] ?? 0,
     }),
     { name: "gymtrack-session" }
   )

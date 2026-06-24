@@ -18,3 +18,7 @@ export function formatWeights(weights: number[]): string {
 
 export const maxWeight = (weights: number[]): number =>
   weights.length ? Math.max(...weights) : 0;
+
+// Carga media entre as series (arredondada a 2 casas).
+export const avgWeight = (weights: number[]): number =>
+  weights.length ? Math.round((weights.reduce((a, b) => a + b, 0) / weights.length) * 100) / 100 : 0;

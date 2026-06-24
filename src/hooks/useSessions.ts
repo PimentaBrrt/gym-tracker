@@ -13,8 +13,8 @@ export function useUserSessions(userId: string | null) {
 export function useCompleteWorkout() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { workoutId: string; userId: string; exercises: Exercise[] }) =>
-      sessionsApi.complete(v.workoutId, v.userId, v.exercises),
+    mutationFn: (v: { workoutId: string; userId: string; exercises: Exercise[]; durationSeconds: number }) =>
+      sessionsApi.complete(v.workoutId, v.userId, v.exercises, v.durationSeconds),
     onSuccess: (_data, v) => {
       qc.invalidateQueries({ queryKey: ["sessions", v.userId] });
       qc.invalidateQueries({ queryKey: ["workouts", v.userId] });

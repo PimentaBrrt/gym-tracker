@@ -31,7 +31,7 @@ export default function WeightChart({ history }: Props) {
           <Tooltip
             contentStyle={{ background: "#0e2424", border: "1px solid rgba(150,153,140,0.28)", borderRadius: 12, color: "#E9EBE6" }}
             labelFormatter={(v) => `Execução ${v}`}
-            formatter={(v: number) => [`${v} kg`, "Carga"]}
+            formatter={(v: number) => [`${v} kg`, "Carga média"]}
           />
           <Line
             type="monotone" dataKey="carga" stroke="#4169E1" strokeWidth={3}

@@ -14,9 +14,9 @@ export function totalVolume(history: ExerciseHistory[]): number {
   return history.reduce((sum, h) => sum + Number(h.weight), 0);
 }
 
-// Estimativa simples: ~4 min por exercicio registrado (series + descanso).
-export function estimatedMinutes(history: ExerciseHistory[]): number {
-  return history.length * 4;
+// Tempo real treinado: soma das duracoes das execucoes (em minutos).
+export function totalTrainedMinutes(sessions: WorkoutSession[]): number {
+  return Math.round(sessions.reduce((sum, x) => sum + (x.duration_seconds || 0), 0) / 60);
 }
 
 export function biggestProgress(history: ExerciseHistory[]): { name: string; delta: number } | null {

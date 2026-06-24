@@ -4,31 +4,39 @@ import { useExerciseHistory } from "@/hooks/useHistory";
 import { exWeights, formatWeights } from "@/lib/exercise";
 import RestTimer from "./RestTimer";
 import WeightChart from "./WeightChart";
-import { IconCheck, IconEdit, IconTrash, IconChart, IconStar } from "./Icons";
+import { IconCheck, IconEdit, IconTrash, IconChart, IconStar, IconReset } from "./Icons";
 
 interface Props {
   exercise: Exercise;
-  done: boolean;
-  onToggle: () => void;
+  count: number;
+  onIncr: () => void;
+  onResetCount: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onFavorite: () => void;
 }
 
-export default function ExerciseCard({ exercise, done, onToggle, onEdit, onDelete, onFavorite }: Props) {
+export default function ExerciseCard({ exercise, count, onIncr, onResetCount, onEdit, onDelete, onFavorite }: Props) {
   const [open, setOpen] = useState(false);
+  const [timerActive, setTimerActive] = useState(false);
   const { data: history } = useExerciseHistory(open ? exercise.id : undefined);
   const weights = exWeights(exercise);
+  const sets = Math.max(1, exercise.sets || 1);
+  const done = count >= sets;
 
   return (
     <div className={"exercise-card" + (done ? " is-done" : "")}>
       <div className="exercise-card__main">
         <button
-          className={"checkbox" + (done ? " is-checked" : "")}
-          onClick={onToggle}
-          aria-label={done ? "Desmarcar" : "Concluir"}
+          className={"set-counter" + (done ? " is-done" : "")}
+          onClick={onIncr}
+          disabled={done}
+          aria-label="Adicionar série"
+          title="Adicionar série"
         >
-          <IconCheck width={16} height={16} />
+          {done
+            ? <IconCheck width={20} height={20} />
+            : <span className="set-counter__num numeric">{count}<span className="set-counter__den">/{sets}</span></span>}
         </button>
 
         <div className="exercise-card__info" onClick={() => setOpen((v) => !v)}>
@@ -42,33 +50,39 @@ export default function ExerciseCard({ exercise, done, onToggle, onEdit, onDelet
           </div>
           {weights.length > 1 && !weights.every((w) => w === weights[0]) && (
             <div className="exercise-card__sets numeric">
-              {weights.map((w, i) => (
-                <span key={i} className="set-pill">S{i + 1}: {w}kg</span>
-              ))}
+              {weights.map((w, i) => <span key={i} className="set-pill">S{i + 1}: {w}kg</span>)}
             </div>
           )}
           {exercise.notes && <div className="exercise-card__notes">{exercise.notes}</div>}
         </div>
 
+        {count > 0 && (
+          <button className="btn btn--icon btn--ghost btn--sm" onClick={onResetCount} aria-label="Reiniciar contagem de séries" title="Reiniciar contagem">
+            <IconReset width={17} height={17} />
+          </button>
+        )}
         <button className="btn btn--icon btn--ghost btn--sm" onClick={() => setOpen((v) => !v)} aria-label="Detalhes">
           <IconChart width={18} height={18} />
         </button>
       </div>
 
-      {open && (
-        <div className="exercise-card__expand fade-in">
-          <RestTimer defaultSeconds={exercise.rest_time} />
-          <div className="exercise-card__chart">
-            <div className="eyebrow" style={{ marginBottom: 8 }}>Evolução de carga</div>
-            <WeightChart history={history ?? []} />
-          </div>
-          <div className="row wrap" style={{ gap: 8 }}>
-            <button className="btn btn--ghost btn--sm" onClick={onEdit}><IconEdit width={16} height={16} /> Editar</button>
-            <button className="btn btn--ghost btn--sm" onClick={onFavorite}><IconStar width={16} height={16} /> Favoritar</button>
-            <button className="btn btn--danger btn--sm" onClick={onDelete}><IconTrash width={16} height={16} /> Excluir</button>
-          </div>
-        </div>
-      )}
+      {/* Mantido montado mesmo colapsado (display:none) para o timer nao parar. */}
+      <div className="exercise-card__expand" style={{ display: (open || timerActive) ? "flex" : "none" }}>
+        <RestTimer defaultSeconds={exercise.rest_time} onActiveChange={setTimerActive} />
+        {open && (
+          <>
+            <div className="exercise-card__chart">
+              <div className="eyebrow" style={{ marginBottom: 8 }}>Evolução de carga média</div>
+              <WeightChart history={history ?? []} />
+            </div>
+            <div className="row wrap" style={{ gap: 8 }}>
+              <button className="btn btn--ghost btn--sm" onClick={onEdit}><IconEdit width={16} height={16} /> Editar</button>
+              <button className="btn btn--ghost btn--sm" onClick={onFavorite}><IconStar width={16} height={16} /> Favoritar</button>
+              <button className="btn btn--danger btn--sm" onClick={onDelete}><IconTrash width={16} height={16} /> Excluir</button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

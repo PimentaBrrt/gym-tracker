@@ -9,7 +9,7 @@ import { useLibrary, useAddToLibrary } from "@/hooks/useLibrary";
 import { useFavoriteWorkout } from "@/hooks/useTemplates";
 import { useSessionStore } from "@/store/sessionStore";
 import { useToast } from "@/store/toastStore";
-import { exWeights, maxWeight, formatWeights } from "@/lib/exercise";
+import { exWeights, maxWeight, formatWeights, avgWeight } from "@/lib/exercise";
 import Header from "@/components/Header";
 import Modal from "@/components/Modal";
 import Confirm from "@/components/Confirm";
@@ -44,10 +44,10 @@ export default function WorkoutDetailPage() {
   const favWorkout = useFavoriteWorkout(userId);
   const toast = useToast((s) => s.show);
 
-  const { completed, toggle, reset } = useSessionStore();
-  const doneMap = completed[id!] ?? {};
+  const { counts, startedAt, incr, resetExercise, reset } = useSessionStore();
+  const countMap = counts[id!] ?? {};
   const total = exercises?.length ?? 0;
-  const done = exercises?.filter((e) => doneMap[e.id]).length ?? 0;
+  const done = exercises?.filter((e) => (countMap[e.id] ?? 0) >= (e.sets || 1)).length ?? 0;
   const allDone = total > 0 && done === total;
   const pct = total ? Math.round((done / total) * 100) : 0;
 
@@ -77,7 +77,7 @@ export default function WorkoutDetailPage() {
       const past = history.filter((h) => h.exercise_id === ex.id);
       if (past.length < 3) continue;
       const last3 = past.slice(-3).map((h) => Number(h.weight));
-      if (last3.every((w) => w === last3[0]) && last3[0] === Number(ex.current_weight)) {
+      if (last3.every((w) => w === last3[0]) && last3[0] === avgWeight(exWeights(ex))) {
         out.push({ exercise: ex, weight: last3[0] });
       }
     }
@@ -145,7 +145,9 @@ export default function WorkoutDetailPage() {
 
   const finish = async () => {
     if (!exercises?.length) return;
-    await complete.mutateAsync({ workoutId: id!, userId, exercises });
+    const start = startedAt[id!];
+    const durationSeconds = start ? Math.round((Date.now() - start) / 1000) : 0;
+    await complete.mutateAsync({ workoutId: id!, userId, exercises, durationSeconds });
     reset(id!);
     toast("Treino concluído! Execução registrada.");
     if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
@@ -213,8 +215,9 @@ export default function WorkoutDetailPage() {
           <ExerciseCard
             key={ex.id}
             exercise={ex}
-            done={!!doneMap[ex.id]}
-            onToggle={() => toggle(id!, ex.id)}
+            count={countMap[ex.id] ?? 0}
+            onIncr={() => incr(id!, ex.id)}
+            onResetCount={() => resetExercise(id!, ex.id)}
             onEdit={() => openEdit(ex)}
             onDelete={() => setDeleting(ex)}
             onFavorite={() => favorite(ex)}

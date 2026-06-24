@@ -32,6 +32,7 @@ export interface WorkoutSession {
   id: string;
   workout_id: string;
   user_id: string;
+  duration_seconds: number;
   completed_at: string;
 }
 

@@ -1,25 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import { IconPlay, IconPause, IconReset } from "./Icons";
 
-interface Props { defaultSeconds: number; }
+interface Props {
+  defaultSeconds: number;
+  onActiveChange?: (active: boolean) => void;
+}
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
-export default function RestTimer({ defaultSeconds }: Props) {
+export default function RestTimer({ defaultSeconds, onActiveChange }: Props) {
   const [total, setTotal] = useState(defaultSeconds);
   const [remaining, setRemaining] = useState(defaultSeconds);
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
 
-  const endAtRef = useRef<number | null>(null);   // timestamp absoluto do fim
+  const endAtRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
   const audioRef = useRef<AudioContext | null>(null);
+  const keepAliveRef = useRef<{ osc: OscillatorNode; gain: GainNode } | null>(null);
   const firedRef = useRef(false);
 
   useEffect(() => { setTotal(defaultSeconds); setRemaining(defaultSeconds); }, [defaultSeconds]);
 
-  // Cria/retoma o AudioContext DENTRO de um gesto do usuario (toque no play).
-  // Sem isso o som nao toca no celular (so no desktop).
+  // Avisa o card se o timer esta ativo (para nao ser desmontado ao colapsar).
+  useEffect(() => { onActiveChange?.(running || finished); }, [running, finished, onActiveChange]);
+
   const ensureAudio = () => {
     try {
       if (!audioRef.current) {
@@ -31,10 +36,31 @@ export default function RestTimer({ defaultSeconds }: Props) {
     return audioRef.current;
   };
 
+  // Mantem o AudioContext "vivo" com um som inaudivel enquanto o timer corre.
+  // Sem isso o contexto suspende e o alarme so toca quando o app volta do background.
+  const startKeepAlive = () => {
+    const ctx = audioRef.current;
+    if (!ctx || keepAliveRef.current) return;
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.value = 0.0001; // praticamente silencioso
+      osc.frequency.value = 30;
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start();
+      keepAliveRef.current = { osc, gain };
+    } catch { /* ignore */ }
+  };
+  const stopKeepAlive = () => {
+    try { keepAliveRef.current?.osc.stop(); } catch { /* ignore */ }
+    keepAliveRef.current = null;
+  };
+
   const alarm = () => {
     const ctx = audioRef.current;
-    if (ctx && ctx.state === "running") {
+    if (ctx) {
       try {
+        if (ctx.state === "suspended") void ctx.resume();
         const t0 = ctx.currentTime;
         const beep = (freq: number, start: number, dur: number) => {
           const osc = ctx.createOscillator();
@@ -51,7 +77,6 @@ export default function RestTimer({ defaultSeconds }: Props) {
         beep(880, 0, 0.22); beep(1175, 0.26, 0.22); beep(1568, 0.52, 0.32);
       } catch { /* ignore */ }
     }
-    // Vibracao: funciona no Android (em primeiro plano). iOS Safari nao suporta.
     if (typeof navigator.vibrate === "function") navigator.vibrate([300, 150, 300, 150, 400]);
   };
 
@@ -66,6 +91,7 @@ export default function RestTimer({ defaultSeconds }: Props) {
     setRemaining(0);
     setFinished(true);
     alarm();
+    stopKeepAlive();
   };
 
   const startTick = () => {
@@ -73,14 +99,14 @@ export default function RestTimer({ defaultSeconds }: Props) {
     tickRef.current = window.setInterval(() => {
       const end = endAtRef.current;
       if (end == null) return;
-      const rem = Math.max(0, Math.round((end - Date.now()) / 1000));
-      setRemaining(rem);
+      setRemaining(Math.max(0, Math.round((end - Date.now()) / 1000)));
       if (Date.now() >= end) fire();
     }, 250);
   };
 
   const play = () => {
     ensureAudio();
+    startKeepAlive();
     if (finished) { restart(); return; }
     firedRef.current = false;
     endAtRef.current = Date.now() + remaining * 1000;
@@ -91,10 +117,11 @@ export default function RestTimer({ defaultSeconds }: Props) {
     if (endAtRef.current != null) setRemaining(Math.max(0, Math.round((endAtRef.current - Date.now()) / 1000)));
     endAtRef.current = null;
     stopTick();
+    stopKeepAlive();
     setRunning(false);
   };
   const restart = () => {
-    stopTick(); endAtRef.current = null; firedRef.current = false;
+    stopTick(); stopKeepAlive(); endAtRef.current = null; firedRef.current = false;
     setRunning(false); setFinished(false); setRemaining(total);
   };
   const toggle = () => { if (finished) restart(); else if (running) pause(); else play(); };
@@ -109,22 +136,20 @@ export default function RestTimer({ defaultSeconds }: Props) {
     });
   };
 
-  // Ao voltar para o app, recalcula pelo timestamp (corrige a pausa do timer em
-  // segundo plano) e dispara o alarme se ja tinha acabado enquanto estava fora.
   useEffect(() => {
     const onVis = () => {
       if (document.visibilityState !== "visible") return;
+      if (audioRef.current?.state === "suspended") void audioRef.current.resume();
       const end = endAtRef.current;
       if (end == null) return;
-      const rem = Math.max(0, Math.round((end - Date.now()) / 1000));
-      setRemaining(rem);
+      setRemaining(Math.max(0, Math.round((end - Date.now()) / 1000)));
       if (Date.now() >= end) fire();
     };
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  useEffect(() => () => stopTick(), []);
+  useEffect(() => () => { stopTick(); stopKeepAlive(); }, []);
 
   const pct = total > 0 ? (remaining / total) * 100 : 0;
   const R = 34, C = 2 * Math.PI * R;
@@ -134,14 +159,11 @@ export default function RestTimer({ defaultSeconds }: Props) {
       <div className="rest-timer__dial">
         <svg viewBox="0 0 80 80" width="80" height="80">
           <circle cx="40" cy="40" r={R} className="rt-track" />
-          <circle
-            cx="40" cy="40" r={R} className="rt-progress"
-            style={{ strokeDasharray: C, strokeDashoffset: C - (pct / 100) * C }}
-          />
+          <circle cx="40" cy="40" r={R} className="rt-progress"
+            style={{ strokeDasharray: C, strokeDashoffset: C - (pct / 100) * C }} />
         </svg>
         <div className="rest-timer__time numeric">{fmt(remaining)}</div>
       </div>
-
       <div className="rest-timer__controls">
         <button className="btn btn--ghost btn--sm" onClick={() => adjust(-15)}>-15s</button>
         <button className="btn btn--primary btn--icon" onClick={toggle} aria-label="play/pause">

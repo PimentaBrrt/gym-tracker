@@ -96,16 +96,19 @@ export const sessionsApi = {
       .from("workout_sessions").select("*").eq("workout_id", workoutId).order("completed_at", { ascending: false });
     return ok(data, error);
   },
-  // Cria a execucao do treino + grava a carga de cada exercicio no historico.
-  async complete(workoutId: string, userId: string, exercises: Exercise[]): Promise<WorkoutSession> {
+  // Cria a execucao do treino (+ duracao) e grava a carga MEDIA de cada exercicio.
+  async complete(workoutId: string, userId: string, exercises: Exercise[], durationSeconds = 0): Promise<WorkoutSession> {
     const { data: session, error: sErr } = await supabase
-      .from("workout_sessions").insert({ workout_id: workoutId, user_id: userId }).select().single();
+      .from("workout_sessions")
+      .insert({ workout_id: workoutId, user_id: userId, duration_seconds: Math.max(0, Math.round(durationSeconds)) })
+      .select().single();
     if (sErr) throw new Error(sErr.message);
+    const avg = (arr: number[]) => (arr.length ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 100) / 100 : 0);
     const rows = exercises.map((e) => ({
       exercise_id: e.id,
       workout_session_id: (session as WorkoutSession).id,
       exercise_name: e.name,
-      weight: e.current_weight,
+      weight: avg(weightsOf(e)),
     }));
     if (rows.length) {
       const { error: hErr } = await supabase.from("exercise_history").insert(rows);

@@ -253,3 +253,17 @@
     b { color: var(--text); font-weight: 700; }
   }
 }
+
+// ---------- Set counter (botao +1 serie) ----------
+.set-counter {
+  width: 46px; height: 46px; flex-shrink: 0; border-radius: 13px;
+  border: 2px solid var(--line-strong); background: var(--bg-elevated);
+  color: var(--text); display: grid; place-items: center; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+  transition: transform .12s ease, background .15s ease, border-color .15s ease;
+  &:active { transform: scale(.93); }
+  &:disabled { cursor: default; }
+  .set-counter__num { font-family: var(--font-display); font-weight: 800; font-size: 17px; }
+  .set-counter__den { color: var(--neutral); font-size: 12px; font-weight: 600; }
+  &.is-done { background: linear-gradient(180deg, var(--success), #2bb98a); border-color: transparent; color: #04221a; }
+}

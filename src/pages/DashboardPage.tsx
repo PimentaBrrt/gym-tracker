@@ -9,7 +9,7 @@ import {
   IconDumbbell, IconFlame, IconTrophy, IconChart, IconChevron, IconShield,
 } from "@/components/Icons";
 import {
-  sessionsThisMonth, estimatedMinutes, biggestProgress, streak, nextWorkout,
+  sessionsThisMonth, totalTrainedMinutes, biggestProgress, streak, nextWorkout,
 } from "@/lib/stats";
 
 export default function DashboardPage() {
@@ -22,7 +22,7 @@ export default function DashboardPage() {
 
   const next = workouts ? nextWorkout(workouts) : null;
   const monthCount = sessions ? sessionsThisMonth(sessions) : 0;
-  const minutes = history ? estimatedMinutes(history) : 0;
+  const minutes = sessions ? totalTrainedMinutes(sessions) : 0;
   const progress = history ? biggestProgress(history) : null;
   const days = sessions ? streak(sessions) : 0;
   const hour = new Date().getHours();
@@ -90,7 +90,7 @@ export default function DashboardPage() {
         <div className="stat-card">
           <div className="stat-card__icon"><IconChart width={20} height={20} /></div>
           <div className="stat-card__value numeric">{Math.floor(minutes / 60)}h{minutes % 60}</div>
-          <div className="stat-card__label">Tempo estimado</div>
+          <div className="stat-card__label">Tempo treinado</div>
         </div>
       </div>
 
